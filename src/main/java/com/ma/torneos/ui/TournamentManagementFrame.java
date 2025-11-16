@@ -28,6 +28,14 @@ public class TournamentManagementFrame extends JFrame {
 
         JScrollPane scroll = new JScrollPane(table);
         add(scroll, BorderLayout.CENTER);
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    openDivisions();
+                }
+            }
+        });
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton btnNew = new JButton("Nuevo");
@@ -35,6 +43,7 @@ public class TournamentManagementFrame extends JFrame {
         JButton btnDelete = new JButton("Eliminar");
         JButton btnRefresh = new JButton("Refrescar");
         JButton btnApplyFilter = new JButton("Aplicar filtro");
+        JButton btnDivisions = new JButton("Divisiones");
         buttons.add(btnNew);
         buttons.add(btnEdit);
         buttons.add(btnDelete);
@@ -42,6 +51,7 @@ public class TournamentManagementFrame extends JFrame {
         buttons.add(cbFilterStatus);
         buttons.add(btnApplyFilter);
         buttons.add(btnRefresh);
+        buttons.add(btnDivisions);
         add(buttons, BorderLayout.NORTH);
 
         btnNew.addActionListener(e -> onNew());
@@ -49,6 +59,7 @@ public class TournamentManagementFrame extends JFrame {
         btnDelete.addActionListener(e -> onDelete());
         btnApplyFilter.addActionListener(e -> applyFilter());
         btnRefresh.addActionListener(e -> loadData());
+        btnDivisions.addActionListener(e -> openDivisions());
 
         loadData();
         setLocationRelativeTo(null);
@@ -183,5 +194,17 @@ public class TournamentManagementFrame extends JFrame {
                 default -> "";
             };
         }
+    }
+
+    private void openDivisions() {
+        Tournament selected = getSelectedTournament();
+        if (selected == null) {
+            JOptionPane.showMessageDialog(this, "Seleccione un torneo.",
+                    "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        SwingUtilities.invokeLater(() ->
+                new DivisionManagementFrame(selected).setVisible(true)
+        );
     }
 }
