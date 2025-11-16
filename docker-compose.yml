@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: martial_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: martial_tournament
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
