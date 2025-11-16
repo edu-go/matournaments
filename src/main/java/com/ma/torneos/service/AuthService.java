@@ -9,6 +9,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 public class AuthService {
     private final JdbcConfig jdbcConfig;
@@ -17,7 +18,7 @@ public class AuthService {
         this.jdbcConfig = jdbcConfig;
     }
 
-    public User authenticate(String username, String rawPassword) {
+    public Optional<User> authenticate(String username, String rawPassword) {
         // We compare using MySQL's SHA2 to match the seeded hashes (UNHEX(SHA2(...,256)))
         final String sql = """
             SELECT user_id, username, role, email
@@ -36,10 +37,11 @@ public class AuthService {
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) return null;
 
+                Long id = rs.getLong("user_id");
                 String u = rs.getString("username");
                 Role role = Role.valueOf(rs.getString("role"));
                 String email = rs.getString("email");
-                return new User(u, role, email);
+                return Optional.of(new User(id, u, role, email));
             }
         } catch (SQLException e) {
             // For a demo, print a simple dialog message could be useful; but keep logic here

@@ -2,6 +2,7 @@ package com.ma.torneos.service;
 
 import com.ma.torneos.domain.Tournament;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,5 +12,6 @@ public interface TournamentDao {
     Tournament insert(Tournament t);
     void update(Tournament t);
     void deleteById(Long id);
-    boolean existsByNameAndDate(String name, java.time.LocalDate date, Long excludeId);
+    boolean existsByNameAndDate(String name, LocalDate date, Long excludeId);
+    List<Tournament> findOpen();
 }

@@ -18,8 +18,8 @@ import java.util.Optional;
 public class TournamentDaoJdbcImpl implements TournamentDao {
     private final JdbcConfig jdbcConfig;
 
-    public TournamentDaoJdbcImpl(JdbcConfig jdbcConfig) {
-        this.jdbcConfig = jdbcConfig;
+    public TournamentDaoJdbcImpl() {
+        this.jdbcConfig = new JdbcConfig();
     }
 
     private Connection getConnection() throws SQLException {
@@ -129,7 +129,7 @@ public class TournamentDaoJdbcImpl implements TournamentDao {
     }
 
     @Override
-    public boolean existsByNameAndDate(String name, java.time.LocalDate date, Long excludeId) {
+    public boolean existsByNameAndDate(String name, LocalDate date, Long excludeId) {
         String sql = """
                 SELECT COUNT(*) 
                 FROM tournament 
@@ -154,6 +154,27 @@ public class TournamentDaoJdbcImpl implements TournamentDao {
             e.printStackTrace();
         }
         return false;
+    }
+
+    @Override
+    public List<Tournament> findOpen() {
+        String sql = """
+            SELECT tournament_id, name, start_date, location, ruleset, status
+            FROM tournament
+            WHERE status = 'OPEN'
+            ORDER BY start_date, name
+            """;
+        List<Tournament> list = new ArrayList<>();
+        try (Connection cn = getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 
     private Tournament mapRow(ResultSet rs) throws SQLException {

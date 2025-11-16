@@ -9,7 +9,7 @@ import java.util.List;
 
 public class TournamentService {
 
-    private final TournamentDaoJdbcImpl dao = new TournamentDaoJdbcImpl(new JdbcConfig());
+    private final TournamentDaoJdbcImpl dao = new TournamentDaoJdbcImpl();
 
     public List<Tournament> listAll() {
         return dao.findAll();

@@ -7,4 +7,7 @@ import java.util.List;
 public interface RegistrationDao {
     int countActiveByDivisionId(Long divisionId); // PENDING + CONFIRMED
     List<RegistrationView> findByDivisionId(Long divisionId);
+    void updateStatus(Long registrationId, String newStatus);
+    Long insertRegistration(Long tournamentId, Long competitorId);
+    boolean existsRegistration(Long tournamentId, Long competitorId);
 }

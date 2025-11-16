@@ -37,6 +37,21 @@ public class MainWindow extends JFrame {
             menu.add(mTorneo);
         }
 
+        // Para OWNER: menú de Inscripción
+        if (user.getRole() == Role.OWNER) {
+            JMenu mInscripcion = new JMenu("Inscripción");
+            JMenuItem miInscribir = new JMenuItem("Inscribir a torneo");
+
+            miInscribir.addActionListener(e ->
+                    SwingUtilities.invokeLater(() ->
+                            new TournamentRegistrationFrame(user).setVisible(true)
+                    )
+            );
+
+            mInscripcion.add(miInscribir);
+            menu.add(mInscripcion);
+        }
+
         JMenu mReportes = new JMenu("Reportes");
         JMenuItem miRep = new JMenuItem("Ver Reportes (DEMO)");
         mReportes.add(miRep);

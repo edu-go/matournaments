@@ -6,6 +6,7 @@ import com.ma.torneos.service.AuthService;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Optional;
 
 public class LoginFrame extends JFrame {
     private final JTextField txtUser = new JTextField(20);
@@ -53,8 +54,8 @@ public class LoginFrame extends JFrame {
             return;
         }
 
-        User logged = authService.authenticate(u, p);
-        if (logged == null) {
+        Optional<User> logged = authService.authenticate(u, p);
+        if (logged.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Credenciales inválidas.",
                     "Error", JOptionPane.ERROR_MESSAGE);
             return;
@@ -62,7 +63,7 @@ public class LoginFrame extends JFrame {
 
         // Abrimos ventana principal y cerramos el login
         SwingUtilities.invokeLater(() -> {
-            new MainWindow(logged).setVisible(true);
+            new MainWindow(logged.get()).setVisible(true);
             dispose();
         });
     }

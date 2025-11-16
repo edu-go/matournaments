@@ -8,6 +8,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,5 +77,66 @@ public class RegistrationDaoJdbcImpl implements RegistrationDao {
             e.printStackTrace();
         }
         return list;
+    }
+
+    @Override
+    public void updateStatus(Long registrationId, String newStatus) {
+        String sql = "UPDATE registration SET status = ? WHERE registration_id = ?";
+        try (Connection cn = getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, newStatus);
+            ps.setLong(2, registrationId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public Long insertRegistration(Long tournamentId, Long competitorId) {
+        String sql = """
+            INSERT INTO registration (tournament_id, competitor_id, division_id, status)
+            VALUES (?, ?, NULL, 'PENDING')
+            """;
+        try (Connection cn = getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setLong(1, tournamentId);
+            ps.setLong(2, competitorId);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        } catch (SQLException e) {
+            // si hay constraint único (tournament_id, competitor_id) fallará aquí
+            e.printStackTrace();
+            throw new RuntimeException("Error insertando inscripción: " + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    @Override
+    public boolean existsRegistration(Long tournamentId, Long competitorId) {
+        String sql = """
+            SELECT COUNT(*) 
+            FROM registration
+            WHERE tournament_id = ?
+              AND competitor_id = ?
+            """;
+        try (Connection cn = getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, tournamentId);
+            ps.setLong(2, competitorId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
