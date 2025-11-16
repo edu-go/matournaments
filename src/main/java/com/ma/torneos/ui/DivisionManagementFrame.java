@@ -3,20 +3,26 @@ package com.ma.torneos.ui;
 import com.ma.torneos.domain.Division;
 import com.ma.torneos.domain.Tournament;
 import com.ma.torneos.service.DivisionService;
+import com.ma.torneos.service.RegistrationDaoJdbcImpl;
 import com.ma.torneos.service.exception.BusinessException;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DivisionManagementFrame extends JFrame {
 
     private final Tournament tournament;
     private final DivisionService service = new DivisionService();
+    private final RegistrationDaoJdbcImpl registrationDao = new RegistrationDaoJdbcImpl();
     private final DivisionTableModel model = new DivisionTableModel();
     private final JTable table = new JTable(model);
+
+    private Map<Long, Integer> countsByDivision = new HashMap<>();
 
     public DivisionManagementFrame(Tournament tournament) {
         super("Divisiones - " + tournament.getName());
@@ -29,15 +35,26 @@ public class DivisionManagementFrame extends JFrame {
         JScrollPane scroll = new JScrollPane(table);
         add(scroll, BorderLayout.CENTER);
 
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    openRegistrations();
+                }
+            }
+        });
+
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton btnNew = new JButton("Nueva División");
         JButton btnEdit = new JButton("Editar");
         JButton btnDelete = new JButton("Eliminar");
         JButton btnRefresh = new JButton("Refrescar");
+        JButton btnRegs = new JButton("Ver inscriptos");
         buttons.add(btnNew);
         buttons.add(btnEdit);
         buttons.add(btnDelete);
         buttons.add(btnRefresh);
+        buttons.add(btnRegs);
 
         add(buttons, BorderLayout.NORTH);
 
@@ -45,13 +62,23 @@ public class DivisionManagementFrame extends JFrame {
         btnEdit.addActionListener(e -> onEdit());
         btnDelete.addActionListener(e -> onDelete());
         btnRefresh.addActionListener(e -> loadData());
+        btnRegs.addActionListener(e -> openRegistrations());
 
         loadData();
         setLocationRelativeTo(null);
     }
 
     private void loadData() {
-        model.setData(service.listByTournament(tournament.getId()));
+        //model.setData(service.listByTournament(tournament.getId()));
+        var divisions = service.listByTournament(tournament.getId());
+        countsByDivision.clear();
+        for (var d : divisions) {
+            if (d.getId() != null) {
+                int count = registrationDao.countActiveByDivisionId(d.getId());
+                countsByDivision.put(d.getId(), count);
+            }
+        }
+        model.setData(divisions, countsByDivision);
     }
 
     private Division getSelectedDivision() {
@@ -127,16 +154,31 @@ public class DivisionManagementFrame extends JFrame {
         }
     }
 
+    private void openRegistrations() {
+        Division selected = getSelectedDivision();
+        if (selected == null) {
+            JOptionPane.showMessageDialog(this, "Seleccione una división.",
+                    "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        SwingUtilities.invokeLater(() ->
+                new DivisionRegistrationsFrame(selected).setVisible(true)
+        );
+    }
+
     // TableModel interno
     private static class DivisionTableModel extends AbstractTableModel {
         private final String[] cols = {
                 "ID", "Nombre", "Edad mín", "Edad máx",
-                "Peso mín", "Peso máx", "Cinturón mín", "Cinturón máx", "Género"
+                "Peso mín", "Peso máx", "Cinturón mín", "Cinturón máx", "Género",
+                "Inscriptos"
         };
         private List<Division> data = new ArrayList<>();
+        private Map<Long, Integer> counts = new HashMap<>();
 
-        public void setData(List<Division> list) {
+        public void setData(List<Division> list, Map<Long,Integer> counts) {
             this.data = list != null ? list : new ArrayList<>();
+            this.counts = counts != null ? counts : new HashMap<>();
             fireTableDataChanged();
         }
 
@@ -161,6 +203,7 @@ public class DivisionManagementFrame extends JFrame {
                 case 6 -> d.getBeltMin();
                 case 7 -> d.getBeltMax();
                 case 8 -> d.getGender();
+                case 9 -> counts.getOrDefault(d.getId(), 0);
                 default -> "";
             };
         }

@@ -1,0 +1,80 @@
+package com.ma.torneos.service;
+
+import com.ma.torneos.config.JdbcConfig;
+import com.ma.torneos.ui.RegistrationView;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class RegistrationDaoJdbcImpl implements RegistrationDao {
+    private final JdbcConfig jdbcConfig;
+
+    public RegistrationDaoJdbcImpl() {
+        this.jdbcConfig = new JdbcConfig();
+    }
+
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(jdbcConfig.getJdbcUrl(), jdbcConfig.getJdbcUser(), jdbcConfig.getJdbcPass());
+    }
+
+    @Override
+    public int countActiveByDivisionId(Long divisionId) {
+        String sql = """
+                SELECT COUNT(*) 
+                FROM registration
+                WHERE division_id = ?
+                  AND status IN ('PENDING','CONFIRMED')
+                """;
+        try (Connection cn = getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, divisionId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    @Override
+    public List<RegistrationView> findByDivisionId(Long divisionId) {
+        String sql = """
+                SELECT r.registration_id,
+                       c.competitor_id,
+                       CONCAT(c.last_name, ', ', c.first_name) AS competitor_name,
+                       r.status
+                FROM registration r
+                JOIN competitor c ON c.competitor_id = r.competitor_id
+                WHERE r.division_id = ?
+                ORDER BY competitor_name
+                """;
+        List<RegistrationView> list = new ArrayList<>();
+        try (Connection cn = getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, divisionId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new RegistrationView(
+                            rs.getLong("registration_id"),
+                            rs.getLong("competitor_id"),
+                            rs.getString("competitor_name"),
+                            rs.getString("status")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+}
