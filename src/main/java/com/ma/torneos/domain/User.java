@@ -20,4 +20,12 @@ public class User {
     public String getUsername() { return username; }
     public Role getRole() { return role; }
     public String getEmail() { return email; }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                '}';
+    }
 }

@@ -35,6 +35,17 @@ public class MainWindow extends JFrame {
         // habilitar solo para ADMIN en demo
         if (user.getRole() == Role.ADMIN) {
             menu.add(mTorneo);
+            JMenu mEscuela = new JMenu("Escuelas");
+            JMenuItem miAsignarOwner = new JMenuItem("Asociar escuela con dueño");
+
+            miAsignarOwner.addActionListener(e ->
+                    SwingUtilities.invokeLater(() ->
+                            new SchoolOwnerAssignmentFrame().setVisible(true)
+                    )
+            );
+
+            mEscuela.add(miAsignarOwner);
+            menu.add(mEscuela);
         }
 
         // Para OWNER: menú de Inscripción
